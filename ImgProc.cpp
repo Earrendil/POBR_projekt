@@ -74,23 +74,38 @@ int ImgProc::calcFieldGrey(cv::Mat& I, bool colorTest) {
 	return field;
 }
 
-std::map<std::string, long double> ImgProc::calcShapeCoeffs(cv::Mat &I, bool colorTest)
+std::map<std::string, long double> ImgProc::calcMomentInvariants(cv::Mat &I, bool colorTest)
 {
 	std::map<std::string, long double> coeffs;
 
-	long double m20 = m_pq(I, 2, 0, colorTest);
-	long double m10 = m_pq(I, 1, 0);
 	long double m00 = m_pq(I, 0, 0);
 	long double m01 = m_pq(I, 0, 1);
-	long double m11 = m_pq(I, 1, 1);
 	long double m02 = m_pq(I, 0, 2);
+	long double m03 = m_pq(I, 0, 3);
+	long double m10 = m_pq(I, 1, 0);
+	long double m11 = m_pq(I, 1, 1);
+	long double m12 = m_pq(I, 1, 2);
+	long double m20 = m_pq(I, 2, 0, colorTest);
+	long double m21 = m_pq(I, 2, 1);
+	long double m30 = m_pq(I, 3, 0);
 
-	long double M20 = m20 - pow(m10, 2.0) / m00;
+	long double i_ = m10 / m00;
+	long double j_ =  m01 / m00;
+
 	long double M02 = m02 - pow(m01, 2.0) / m00;
+	long double M03 = m03 - 3 * m02 * j_ + 2 * m01 * pow(j_, 2.0);
 	long double M11 = m11 - m10 * m01 / m00;
+	long double M12 = m12 - 2 * m11 * j_ - m02 * i_ + 2 * m10 * pow(j_, 2.0);
+	long double M20 = m20 - pow(m10, 2.0) / m00;
+	long double M21 = m21 - 2 * m11 * i_ - m20 * j_ + 2 * m01 * pow(i_, 2.0);
+	long double M30 = m30 - 3 * m20 * i_ + 2 * m10 * pow(i_, 2.0);
 
 	long double M1 = (M20 + M02) / pow(m00, 2.0);
 	coeffs["M1"] = M1;
+
+	long double M3 = (pow(M30 + 3 * M12, 2.0) + (3 * M21 - M03, 2.0)) / pow(m00, 5.0);
+	coeffs["M3"] = M3;
+
 	long double M7 = (M20 * M02 - pow(M11, 2.0)) / pow(m00, 4.0);
 	coeffs["M7"] = M7;
 

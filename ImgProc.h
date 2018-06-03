@@ -15,7 +15,7 @@ public:
 	cv::Mat& ImgProc::threshold(cv::Mat&, uchar);
 	cv::Mat dilate(cv::Mat&, uint);
 	int calcFieldGrey(cv::Mat&, bool = false);
-	std::map<std::string, long double> calcShapeCoeffs(cv::Mat &, bool = false);
+	std::map<std::string, long double> calcMomentInvariants(cv::Mat &, bool = false);
 
 private:
 	ImgProc() {};

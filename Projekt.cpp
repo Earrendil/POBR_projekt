@@ -3,6 +3,8 @@
 #include "opencv2/core/core.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/highgui/highgui.hpp"
+#include <fstream>
+#include <stdio.h>
 #include <iostream>
 #include <math.h>
 #include <cmath>
@@ -15,39 +17,6 @@ struct Box
 	int y_min;
 	int y_max;
 };
-
-//
-//long double m_pq(cv::Mat& I, int p, int q){
-//	//cv::Mat_<cv::Vec3b> _I = I.clone();
-//	//int hist[256];
-//	//for (int q = 0; q <= 255; ++q) {
-//	//	hist[q] = 0;
-//	//}
-//	cv::Mat greyMat;
-//	cv::cvtColor(I, greyMat, CV_BGR2GRAY);
-//	long double m = 0.0;
-//	for (int i = 0; i < greyMat.rows; ++i) {
-//		for (int j = 0; j < greyMat.cols; ++j){
-//			float x_ij = 0.0;
-//		//	hist[(int)greyMat.at<uchar>(i, j)]++;
-//			if ((int)greyMat.at<uchar>(i, j) < 255){
-//			//	_I(i,j) = cv::Vec3b(255, 255, 0);
-//				//std::cout << "(" << i << ", " << j << "): " << (int)greyMat.at<uchar>(i, j) << std::endl;
-//				x_ij = 1.0;
-//			}
-//			else {
-//				x_ij = 0.0;
-//			}
-//			m += pow(i, p) * pow(j, q) * x_ij;
-//		}
-//	}
-//	//for (int q = 0; q <= 255; ++q) {
-//		//std::cout << q << ": " << hist[q] << std::endl;
-//	//}
-////cv:imshow("mpq", _I);
-//	return m;
-//}
-
 /*
 void nachylenie(cv::Mat& I_r0){
 	//std::cout << "cols: " << I_r0.cols << ", rows: " << I_r0.rows << std::endl;
@@ -163,31 +132,6 @@ int calculateField(cv::Mat_<cv::Vec3b>& I) {
 	}
 	return field;
 }
-//
-//bool isBlack(uchar pixel) {
-//	if (pixel == 0)
-//		return true;
-//	else
-//		return false;
-//}
-//
-//int calcFieldGrey(cv::Mat& I) {
-//	cv::Mat _I = I.clone();
-//	int field = 0;
-//	for (int i = 0; i < I.rows; ++i) {
-//		for (int j = 0; j < I.cols; ++j) {
-//
-//			// Pole S
-//			if (isBlack(I.at<uchar>(i, j)))
-//			{
-//				++field;
-//				_I.at<uchar>(i, j) = 128;
-//			}
-//		}
-//	}
-//	cv::imshow("FIELD", _I);
-//	return field;
-//}
 
 int calculateCirciut(cv::Mat_<cv::Vec3b>& _I) {
 	cv::Mat_<cv::Vec3b>& I = _I.clone();
@@ -318,58 +262,46 @@ cv::Mat selectMax(cv::Mat& I){
     }
     return res;
 }
-/*
-cv::Mat& threshold(cv::Mat& I, uchar thresh) {
-	switch (I.channels()) {
-	case 3:
-		std::cout << "THRESHOLD will only be performed on grey scale images." << std::endl;
-		return I;
-	case 1:
-		for (int i = 0; i < I.rows; ++i) {
-			for (int j = 0; j < I.cols; ++j) {
-				if (I.at<uchar>(i, j) < thresh) {
-					I.at<uchar>(i, j) = 0;
-				}
-				else {
-					I.at<uchar>(i, j) = 255;
-				}
-			}
-		}
-		return I;
-	}
+
+void computeGlove(std::string filename, std::string windowname, std::ofstream& file) {
+	file << "---------------- image: " << filename << " ---------------------" << std::endl;
+	ImgProc& imgProc = ImgProc::getInstance();
+	//READ IMAGE
+	cv::Mat img = cv::imread(filename);
+	cv::imshow(windowname, img);
+	//CONVERT TO GREY SCALE
+	cv::Mat img_grey;
+	cv::cvtColor(img, img_grey, CV_BGR2GRAY);
+	cv::imshow(windowname.append(" GREY"), img_grey);
+	//THRESHOLD
+	cv::Mat img_thresh = imgProc.threshold(img_grey, 128);
+	cv::imshow(windowname.append(" threshold"), img_thresh);
+	//DILATE
+	cv::Mat img_dilate = imgProc.dilate(img_thresh, 3);
+	cv::imshow(windowname.append(" dilate"), img_dilate);
+	//CALCULATE FIELD
+	int field = imgProc.calcFieldGrey(img_dilate, true);
+	std::cout << "FIELD: " << field << std::endl;
+	//CALCULATE SHAPE COEEFICIENTS
+
+	std::map<std::string, long double> coeffs = imgProc.calcMomentInvariants(img_dilate, true);
+	file << "M1: " << coeffs["M1"] << ",      M3: " << coeffs["M3"] << ",      M7: " << coeffs["M7"] << std::endl;
 }
-
-
-cv::Mat dilate_moje(cv::Mat& I, uint times) {
-	cv::Mat _I = I.clone();
-	for (int q = 0; q < times; ++q) {
-		for (int i = 1; i < I.rows - 1; ++i) {
-			for (int j = 1; j < I.cols - 1; ++j) {
-				//for (int i = 0; i < I.rows; ++i) {
-					//for (int j = 0; j < I.cols; ++j) {
-				for (int ii = i - 1; ii <= i + 1; ++ii) {
-					for (int jj = j - 1; jj <= j + 1; ++jj) {
-
-						if (I.at<uchar>(ii, jj) == 0) {
-							_I.at<uchar>(i, j) = 0;
-							goto stop;
-						}
-					}
-				}
-			stop:;
-			}
-		}
-		_I.copyTo(I);
-	}
-	
-	return _I;
-}
-*/
-
 
 int main(int, char *[]) {
-	ImgProc& imgProc = ImgProc::getInstance();
-
+	std::ofstream results;
+	results.open("results.txt");
+	computeGlove("z1.jpg", "z palcami 1", results);
+	computeGlove("z2.jpg", "z palcami 2", results);
+	computeGlove("z3.jpg", "z palcami 3", results);
+	computeGlove("z4.jpg", "z palcami 4", results);
+	computeGlove("z5.jpg", "z palcami 5", results);
+	computeGlove("z6.jpg", "z palcami 6", results);
+	computeGlove("z7.jpg", "z palcami 7", results);
+	computeGlove("z8.jpg", "z palcami 8", results);
+	computeGlove("bez1.jpg", "bez palcow 1", results);
+	results.close();
+	/*
 	cv::Mat zpalcami1 = cv::imread("zpalcami1.jpg");
 	cv::imshow("Z palcami 1", zpalcami1);
 	cv::Mat zpalcami1_grey;
@@ -387,6 +319,7 @@ int main(int, char *[]) {
 	cv::imshow("AFTER FIELD", dil);
 	std::map<std::string, long double> coeffs = imgProc.calcShapeCoeffs(dil, true);
 	std::cout << "M1: " << coeffs["M1"] << ",      M7: " << coeffs["M7"] << std::endl;
+	*/
 	//cv::Mat dil2 = dilate_moje(dil);
 	//cv::imshow("Z palcami 1 GREY threshold dilate 2x", dil2);
 	//cv::Mat dil3 = dilate_moje(dil2);
