@@ -49,8 +49,112 @@ cv::Mat ImgProc::dilate(cv::Mat& I, uint times) {
 }
 
 
+cv::Mat ImgProc::erode(cv::Mat& I, uint times) {
+	cv::Mat _I = I.clone();
+	for (int q = 0; q < times; ++q) {
+		for (int i = 1; i < I.rows - 1; ++i) {
+			for (int j = 1; j < I.cols - 1; ++j) {
+				//for (int i = 0; i < I.rows; ++i) {
+				//for (int j = 0; j < I.cols; ++j) {
+				for (int ii = i - 1; ii <= i + 1; ++ii) {
+					for (int jj = j - 1; jj <= j + 1; ++jj) {
 
-int ImgProc::calcFieldGrey(cv::Mat& I, bool colorTest) {
+						if (I.at<uchar>(ii, jj) == 255) {
+							_I.at<uchar>(i, j) = 255;
+							goto stop;
+						}
+					}
+				}
+			stop:;
+			}
+		}
+		_I.copyTo(I);
+	}
+
+	return _I;
+}
+
+cv::Mat ImgProc::contrast(cv::Mat &I, float contrast)
+{
+	cv::Mat _I = I.clone();
+	for (int i = 0; i < I.rows; ++i) {
+		for (int j = 0; j < I.cols; ++j) {
+			_I.at<uchar>(i, j) = I.at<uchar>(i, j) * contrast;
+		}
+	}
+	return _I;
+}
+
+bool inRange(uint value, uint high, uint low) {
+	if (value >= low && value <= high)
+		return true;
+	else
+		return false;
+}
+
+bool isGrey(cv::Vec3b pixel, uint deviation) {
+	uint high = pixel[0] + deviation;
+	uint low = pixel[0] - deviation;
+	if (inRange(pixel[1], high, low) && inRange(pixel[2], high, low))
+		return true;
+	else
+		return false;
+}
+
+bool isDark(cv::Vec3b pixel, uint darkness) {
+	if ((pixel[0] + pixel[1] + pixel[2]) < 3 * darkness) {
+		return true;
+	}
+	else
+		return false;
+}
+
+cv::Mat ImgProc::deleteNonGrey(cv::Mat &I, uint deviation, uint darkness)
+{
+	cv::Mat_<cv::Vec3b> _I = I.clone();
+	for (int i = 1; i < I.rows - 1; ++i) {
+		for (int j = 1; j < I.cols - 1; ++j) {
+			if (!isGrey(_I(i, j), deviation) && !isDark(_I(i, j), darkness)) {
+				_I(i, j) = cv::Vec3b(255, 255, 255);
+			}
+
+		}
+	}
+	return _I;
+}
+
+
+bool isSkinColor(cv::Vec3b pixel) {
+	if ((pixel[0] < 15 && pixel[1] > 30 )) {
+		return true;
+	}
+	else
+		//if (pixel[1] !=0 && pixel[1] !=2)
+		//std::cout << (int)pixel[1] << std::endl;
+		return false;
+}
+
+cv::Mat ImgProc::deleteNonSkin(cv::Mat &I)
+{
+	cv::Mat_<cv::Vec3b> _I = I.clone();
+	for (int i = 0; i < I.rows ; ++i) {
+		for (int j = 0; j < I.cols; ++j) {
+			if (!isSkinColor(I.at<cv::Vec3b>(i,j))) {
+				_I(i, j) = cv::Vec3b(255, 255, 255);
+			}
+
+		}
+	}
+	return _I;
+}
+
+cv::Mat ImgProc::cutBoundings(cv::Mat &I, uint margin)
+{
+	cv::Mat cutted = I(cv::Rect(margin, margin, I.cols - margin, I.rows - margin));
+	return cutted;
+}
+
+int ImgProc::calcFieldGrey(cv::Mat& I, std::string& windowname, bool colorTest) {
 	cv::Mat _I;
 	if (colorTest == true) {
 		_I = I.clone();
@@ -69,12 +173,12 @@ int ImgProc::calcFieldGrey(cv::Mat& I, bool colorTest) {
 		}
 	}
 	if (colorTest == true) {
-		cv::imshow("FIELD", _I);
+		cv::imwrite(windowname.append(" 05 FIELD.jpg"), _I);
 	}
 	return field;
 }
 
-std::map<std::string, long double> ImgProc::calcMomentInvariants(cv::Mat &I, bool colorTest)
+std::map<std::string, long double> ImgProc::calcMomentInvariants(cv::Mat &I, std::string& windowname, bool colorTest)
 {
 	std::map<std::string, long double> coeffs;
 
@@ -85,7 +189,7 @@ std::map<std::string, long double> ImgProc::calcMomentInvariants(cv::Mat &I, boo
 	long double m10 = m_pq(I, 1, 0);
 	long double m11 = m_pq(I, 1, 1);
 	long double m12 = m_pq(I, 1, 2);
-	long double m20 = m_pq(I, 2, 0, colorTest);
+	long double m20 = m_pq(I, 2, 0, windowname, colorTest);
 	long double m21 = m_pq(I, 2, 1);
 	long double m30 = m_pq(I, 3, 0);
 
@@ -121,7 +225,7 @@ bool ImgProc::isBlack(uchar pixel) {
 		return false;
 }
 
-long double ImgProc::m_pq(cv::Mat& I, int p, int q, bool colorTest) {
+long double ImgProc::m_pq(cv::Mat& I, int p, int q, std::string& windowname, bool colorTest) {
 	cv::Mat _I;
 	if (colorTest == true) {
 		_I = I.clone();
@@ -156,7 +260,7 @@ long double ImgProc::m_pq(cv::Mat& I, int p, int q, bool colorTest) {
 	//std::cout << q << ": " << hist[q] << std::endl;
 	//}
 	if (colorTest == true) {
-		cv:imshow("mpq", _I);
+		cv:imwrite(windowname.append(" 06 mpq.jpg"), _I);
 	}
 	return m;
 }
