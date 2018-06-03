@@ -48,6 +48,7 @@ struct Box
 //	return m;
 //}
 
+/*
 void nachylenie(cv::Mat& I_r0){
 	//std::cout << "cols: " << I_r0.cols << ", rows: " << I_r0.rows << std::endl;
 	long double m10_ = m_pq(I_r0, 1, 0);
@@ -101,6 +102,7 @@ void nachylenie(cv::Mat& I_r0){
 	//std::cout << "nachylenie2: " << nachylenie2 << " , w stopniach: " << degrees2 << std::endl;
 	std::cout << "nachylenie3: " << nachylenie3 << " , w stopniach: " << degrees3 << std::endl;
 }
+*/
 
 
 
@@ -267,6 +269,7 @@ cv::Mat& perform(cv::Mat& I, bool strzalki = false, char* nazwa = "strzalki_1_r0
 	  //w3 = obwod / (2 * std::sqrt(M_PI * pole)) - 1;
 	  w3 = calculateCirciut(_I) / (2 * std::sqrt(M_PI * calculateField(_I))) - 1;
 	  //M1
+	  /*
 	  long double m20 = m_pq(I, 2, 0);
 	  long double m10 = m_pq(I, 1, 0);
 	  long double m00 = m_pq(I, 0, 0);
@@ -283,10 +286,11 @@ cv::Mat& perform(cv::Mat& I, bool strzalki = false, char* nazwa = "strzalki_1_r0
 	  //M7
 	  // I = _I;
 	  std::cout << "S = " << calculateField(_I) << " L = " << calculateCirciut(_I) << "         W3 = " << w3 << " M1 =  " << M1 << " M7 = " << M7 << std::endl;
+	  */
 	  if (strzalki) {
 
 		  cv::imshow(nazwa, _I);
-		  nachylenie(I);
+		 // nachylenie(I);
 
 	  }
 	  break;
@@ -377,8 +381,12 @@ int main(int, char *[]) {
 	cv::Mat dil = imgProc.dilate(thresh, 3);
 	cv::imshow("Z palcami 1 GREY threshold dilate", dil);
 
-	int field = imgProc.calcFieldGrey(dil);
+	int field = imgProc.calcFieldGrey(dil, true);
 	std::cout << "FIELD: " << field << std::endl;
+
+	cv::imshow("AFTER FIELD", dil);
+	std::map<std::string, long double> coeffs = imgProc.calcShapeCoeffs(dil, true);
+	std::cout << "M1: " << coeffs["M1"] << ",      M7: " << coeffs["M7"] << std::endl;
 	//cv::Mat dil2 = dilate_moje(dil);
 	//cv::imshow("Z palcami 1 GREY threshold dilate 2x", dil2);
 	//cv::Mat dil3 = dilate_moje(dil2);

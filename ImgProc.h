@@ -2,6 +2,7 @@
 #include "opencv2/core/core.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/highgui/highgui.hpp"
+#include <map>
 
 class ImgProc
 {
@@ -13,7 +14,8 @@ public:
 
 	cv::Mat& ImgProc::threshold(cv::Mat&, uchar);
 	cv::Mat dilate(cv::Mat&, uint);
-	int calcFieldGrey(cv::Mat&);
+	int calcFieldGrey(cv::Mat&, bool = false);
+	std::map<std::string, long double> calcShapeCoeffs(cv::Mat &, bool = false);
 
 private:
 	ImgProc() {};
@@ -21,6 +23,6 @@ private:
 	void operator=(ImgProc const&) = delete;
 
 	bool isBlack(uchar);
-	long double m_pq(cv::Mat&, int, int)
+	long double m_pq(cv::Mat&, int, int, bool = false);
 };
 

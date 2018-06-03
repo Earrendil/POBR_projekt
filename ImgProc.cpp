@@ -50,8 +50,11 @@ cv::Mat ImgProc::dilate(cv::Mat& I, uint times) {
 
 
 
-int ImgProc::calcFieldGrey(cv::Mat& I) {
-	cv::Mat _I = I.clone();
+int ImgProc::calcFieldGrey(cv::Mat& I, bool colorTest) {
+	cv::Mat _I;
+	if (colorTest == true) {
+		_I = I.clone();
+	}
 	int field = 0;
 	for (int i = 0; i < I.rows; ++i) {
 		for (int j = 0; j < I.cols; ++j) {
@@ -59,12 +62,39 @@ int ImgProc::calcFieldGrey(cv::Mat& I) {
 			if (isBlack(I.at<uchar>(i, j)))
 			{
 				++field;
-				_I.at<uchar>(i, j) = 128;
+				if (colorTest == true) {
+					_I.at<uchar>(i, j) = 128;
+				}
 			}
 		}
 	}
-	cv::imshow("FIELD", _I);
+	if (colorTest == true) {
+		cv::imshow("FIELD", _I);
+	}
 	return field;
+}
+
+std::map<std::string, long double> ImgProc::calcShapeCoeffs(cv::Mat &I, bool colorTest)
+{
+	std::map<std::string, long double> coeffs;
+
+	long double m20 = m_pq(I, 2, 0, colorTest);
+	long double m10 = m_pq(I, 1, 0);
+	long double m00 = m_pq(I, 0, 0);
+	long double m01 = m_pq(I, 0, 1);
+	long double m11 = m_pq(I, 1, 1);
+	long double m02 = m_pq(I, 0, 2);
+
+	long double M20 = m20 - pow(m10, 2.0) / m00;
+	long double M02 = m02 - pow(m01, 2.0) / m00;
+	long double M11 = m11 - m10 * m01 / m00;
+
+	long double M1 = (M20 + M02) / pow(m00, 2.0);
+	coeffs["M1"] = M1;
+	long double M7 = (M20 * M02 - pow(M11, 2.0)) / pow(m00, 4.0);
+	coeffs["M7"] = M7;
+
+	return coeffs;
 }
 
 
@@ -76,22 +106,28 @@ bool ImgProc::isBlack(uchar pixel) {
 		return false;
 }
 
-long double ImgProc::m_pq(cv::Mat& I, int p, int q) {
-	//cv::Mat_<cv::Vec3b> _I = I.clone();
+long double ImgProc::m_pq(cv::Mat& I, int p, int q, bool colorTest) {
+	cv::Mat _I;
+	if (colorTest == true) {
+		_I = I.clone();
+	}
+
 	//int hist[256];
 	//for (int q = 0; q <= 255; ++q) {
 	//	hist[q] = 0;
 	//}
-	cv::Mat greyMat;
-	cv::cvtColor(I, greyMat, CV_BGR2GRAY);
+	//cv::Mat greyMat;
+	//cv::cvtColor(I, greyMat, CV_BGR2GRAY);
 	long double m = 0.0;
-	for (int i = 0; i < greyMat.rows; ++i) {
-		for (int j = 0; j < greyMat.cols; ++j) {
+	for (int i = 0; i < I.rows; ++i) {
+		for (int j = 0; j < I.cols; ++j) {
 			float x_ij = 0.0;
 			//	hist[(int)greyMat.at<uchar>(i, j)]++;
-			//if ((int)greyMat.at<uchar>(i, j) < 255) {
-			if (isBlack(greyMat.at<uchar>(i, j))) {
-				//	_I(i,j) = cv::Vec3b(255, 255, 0);
+			//if ((int)I.at<uchar>(i, j) < 255) {
+			if (isBlack(I.at<uchar>(i, j))) {
+				if (colorTest == true) {
+					_I.at<uchar>(i, j) = 200;
+				}
 				//std::cout << "(" << i << ", " << j << "): " << (int)greyMat.at<uchar>(i, j) << std::endl;
 				x_ij = 1.0;
 			}
@@ -104,7 +140,9 @@ long double ImgProc::m_pq(cv::Mat& I, int p, int q) {
 	//for (int q = 0; q <= 255; ++q) {
 	//std::cout << q << ": " << hist[q] << std::endl;
 	//}
-	//cv:imshow("mpq", _I);
+	if (colorTest == true) {
+		cv:imshow("mpq", _I);
+	}
 	return m;
 }
 
