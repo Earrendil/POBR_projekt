@@ -6,6 +6,7 @@
 #include <iostream>
 #include <math.h>
 #include <cmath>
+#include "ImgProc.h"
 
 struct Box
 {
@@ -15,37 +16,37 @@ struct Box
 	int y_max;
 };
 
-
-long double m_pq(cv::Mat& I, int p, int q){
-	//cv::Mat_<cv::Vec3b> _I = I.clone();
-	//int hist[256];
-	//for (int q = 0; q <= 255; ++q) {
-	//	hist[q] = 0;
-	//}
-	cv::Mat greyMat;
-	cv::cvtColor(I, greyMat, CV_BGR2GRAY);
-	long double m = 0.0;
-	for (int i = 0; i < greyMat.rows; ++i) {
-		for (int j = 0; j < greyMat.cols; ++j){
-			float x_ij = 0.0;
-		//	hist[(int)greyMat.at<uchar>(i, j)]++;
-			if ((int)greyMat.at<uchar>(i, j) < 255){
-			//	_I(i,j) = cv::Vec3b(255, 255, 0);
-				//std::cout << "(" << i << ", " << j << "): " << (int)greyMat.at<uchar>(i, j) << std::endl;
-				x_ij = 1.0;
-			}
-			else {
-				x_ij = 0.0;
-			}
-			m += pow(i, p) * pow(j, q) * x_ij;
-		}
-	}
-	//for (int q = 0; q <= 255; ++q) {
-		//std::cout << q << ": " << hist[q] << std::endl;
-	//}
-//cv:imshow("mpq", _I);
-	return m;
-}
+//
+//long double m_pq(cv::Mat& I, int p, int q){
+//	//cv::Mat_<cv::Vec3b> _I = I.clone();
+//	//int hist[256];
+//	//for (int q = 0; q <= 255; ++q) {
+//	//	hist[q] = 0;
+//	//}
+//	cv::Mat greyMat;
+//	cv::cvtColor(I, greyMat, CV_BGR2GRAY);
+//	long double m = 0.0;
+//	for (int i = 0; i < greyMat.rows; ++i) {
+//		for (int j = 0; j < greyMat.cols; ++j){
+//			float x_ij = 0.0;
+//		//	hist[(int)greyMat.at<uchar>(i, j)]++;
+//			if ((int)greyMat.at<uchar>(i, j) < 255){
+//			//	_I(i,j) = cv::Vec3b(255, 255, 0);
+//				//std::cout << "(" << i << ", " << j << "): " << (int)greyMat.at<uchar>(i, j) << std::endl;
+//				x_ij = 1.0;
+//			}
+//			else {
+//				x_ij = 0.0;
+//			}
+//			m += pow(i, p) * pow(j, q) * x_ij;
+//		}
+//	}
+//	//for (int q = 0; q <= 255; ++q) {
+//		//std::cout << q << ": " << hist[q] << std::endl;
+//	//}
+////cv:imshow("mpq", _I);
+//	return m;
+//}
 
 void nachylenie(cv::Mat& I_r0){
 	//std::cout << "cols: " << I_r0.cols << ", rows: " << I_r0.rows << std::endl;
@@ -160,6 +161,31 @@ int calculateField(cv::Mat_<cv::Vec3b>& I) {
 	}
 	return field;
 }
+//
+//bool isBlack(uchar pixel) {
+//	if (pixel == 0)
+//		return true;
+//	else
+//		return false;
+//}
+//
+//int calcFieldGrey(cv::Mat& I) {
+//	cv::Mat _I = I.clone();
+//	int field = 0;
+//	for (int i = 0; i < I.rows; ++i) {
+//		for (int j = 0; j < I.cols; ++j) {
+//
+//			// Pole S
+//			if (isBlack(I.at<uchar>(i, j)))
+//			{
+//				++field;
+//				_I.at<uchar>(i, j) = 128;
+//			}
+//		}
+//	}
+//	cv::imshow("FIELD", _I);
+//	return field;
+//}
 
 int calculateCirciut(cv::Mat_<cv::Vec3b>& _I) {
 	cv::Mat_<cv::Vec3b>& I = _I.clone();
@@ -288,7 +314,7 @@ cv::Mat selectMax(cv::Mat& I){
     }
     return res;
 }
-
+/*
 cv::Mat& threshold(cv::Mat& I, uchar thresh) {
 	switch (I.channels()) {
 	case 3:
@@ -334,18 +360,25 @@ cv::Mat dilate_moje(cv::Mat& I, uint times) {
 	
 	return _I;
 }
+*/
 
 
 int main(int, char *[]) {
+	ImgProc& imgProc = ImgProc::getInstance();
+
 	cv::Mat zpalcami1 = cv::imread("zpalcami1.jpg");
 	cv::imshow("Z palcami 1", zpalcami1);
 	cv::Mat zpalcami1_grey;
 	cv::cvtColor(zpalcami1, zpalcami1_grey, CV_BGR2GRAY);
 	cv::imshow("Z palcami 1 GREY", zpalcami1_grey);
-	cv::Mat thresh = threshold(zpalcami1_grey, 128);
+	//cv::Mat thresh = threshold(zpalcami1_grey, 128);
+	cv::Mat thresh = imgProc.threshold(zpalcami1_grey, 128);
 	cv::imshow("Z palcami 1 GREY threshold", thresh);
-	cv::Mat dil = dilate_moje(thresh, 3);
+	cv::Mat dil = imgProc.dilate(thresh, 3);
 	cv::imshow("Z palcami 1 GREY threshold dilate", dil);
+
+	int field = imgProc.calcFieldGrey(dil);
+	std::cout << "FIELD: " << field << std::endl;
 	//cv::Mat dil2 = dilate_moje(dil);
 	//cv::imshow("Z palcami 1 GREY threshold dilate 2x", dil2);
 	//cv::Mat dil3 = dilate_moje(dil2);

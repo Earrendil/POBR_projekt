@@ -158,7 +158,11 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ImgProc.cpp" />
     <ClCompile Include="Projekt.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ImgProc.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
