@@ -293,16 +293,28 @@ void computeHand(std::string filename, std::string windowname, std::ofstream& fi
 	std::string img_thresh__grey_filename = std::string(windowname).append(" 130 threshold deleted non gray").append(".jpg");
 	cv::imwrite(img_thresh__grey_filename, img_thresh_grey);
 	//ERODE
-	cv::Mat img_erode2 = imgProc.erode(img_thresh_grey, 1);
-	std::string img_erode_filename2 = std::string(windowname).append(" 135 erode").append(".jpg");
-	cv::imwrite(img_erode_filename2, img_erode2);
+	//cv::Mat img_erode2 = imgProc.erode(img_thresh_grey, 1);
+	//std::string img_erode_filename2 = std::string(windowname).append(" 135 erode").append(".jpg");
+	//cv::imwrite(img_erode_filename2, img_erode2);
 	//DILATE
-	cv::Mat img_dilate2 = imgProc.dilate(img_erode2, 8);
+	cv::Mat img_dilate2 = imgProc.dilate(img_thresh_grey, 3);
 	std::string img_dilate_filename2 = std::string(windowname).append(" 140 dilate").append(".jpg");
 	cv::imwrite(img_dilate_filename2, img_dilate2);
 	//CALCULATE MOMENT INVARIANTS
 	std::map<std::string, long double> coeffs = imgProc.calcMomentInvariants(img_dilate2, windowname, true);
 	file << "M1: " << coeffs["M1"] << ",      M3: " << coeffs["M3"] << ",      M7: " << coeffs["M7"] << std::endl;
+	//CALCULATE FIELD
+	int field = imgProc.calcFieldGrey(img_dilate2, windowname, true);
+	float img_field = (float)img_dilate2.rows * (float)img_dilate2.cols;
+	float field_percentage = (float)field / img_field;
+	file << "FIELD: " << field << ", img_field: " << img_field << ", percentage: " << field_percentage << std::endl;
+
+	//IS IT HAND?
+	std::cout << filename << std::endl;
+	if (field_percentage >= 0.358291 && field_percentage <= 0.513649 &&
+		coeffs["M7"] >= 0.00766325 && coeffs["M7"] <= 0.00963733) {
+		std::cout << "DETECTED HAND" << std::endl;
+	}
 }
 
 void computeGlove(std::string filename, std::string windowname, std::ofstream& file) {
@@ -340,8 +352,26 @@ void computeGlove(std::string filename, std::string windowname, std::ofstream& f
 	//CALCULATE MOMENT INVARIANTS
 	std::map<std::string, long double> coeffs = imgProc.calcMomentInvariants(img_dilate2, windowname, true);
 	file << "M1: " << coeffs["M1"] << ",      M3: " << coeffs["M3"] << ",      M7: " << coeffs["M7"] << std::endl;
+	//CALCULATE FIELD
+	int field = imgProc.calcFieldGrey(img_dilate2, windowname, true);
+	float img_field = (float)img_dilate2.rows * (float)img_dilate2.cols;
+	float field_percentage = (float)field / img_field;
+	file << "FIELD: " << field << ", img_field: "<<img_field<<", percentage: "<<field_percentage<<std::endl;
 
+	//IS IT ROVER GLOVE?
+	std::cout << filename << std::endl;
+	if (field_percentage >= 0.12  && field_percentage <= 0.45 &&
+		coeffs["M7"] >= 0.006  && coeffs["M7"] <= 0.0081 &&
+		coeffs["M1"] >= 0.16   && coeffs["M1"] <= 0.19) {
+		std::cout << "DETECTED ROVER GLOVE" << std::endl;
+	}
 
+	//IS IT REGULAR GLOVE?
+	if (field_percentage >= 0.30 && field_percentage <= 0.497 &&
+		coeffs["M7"] >= 0.00739  && coeffs["M7"] <= 0.00967 &&
+		coeffs["M1"] >= 0.19  && coeffs["M1"]<= 0.24) {
+		std::cout << "DETECTED REGULAR GLOVE" << std::endl;
+	}
 	/*
 	//CONVERT TO GREY SCALE
 	cv::Mat img_grey;
@@ -373,20 +403,38 @@ void computeGlove(std::string filename, std::string windowname, std::ofstream& f
 int main(int, char *[]) {
 	std::ofstream results;
 	results.open("results.txt");
-	computeGlove("z1.jpg", "z palcami 1", results);
-	computeGlove("bez1.jpg", "bez palcow 1", results);
 	computeHand("d1.jpg", "dlon 1", results);
 	computeHand("d2.jpg", "dlon 2", results);
 	computeHand("d3.jpg", "dlon 3", results);
 	computeHand("d4.jpg", "dlon 4", results);
-	//computeHand("d5.jpg", "dlon 5", results);
 	computeHand("d6.jpg", "dlon 6", results);
 	computeHand("d7.jpg", "dlon 7", results);
 	computeHand("d8.jpg", "dlon 8", results);
 	computeHand("d9.jpg", "dlon 9", results);
-	//computeHand("d10.jpg", "dlon 10", results);
+	computeHand("bez1.jpg", "bez palcow 1", results);
+	computeHand("bez2.jpg", "bez palcow 2", results);
+	computeHand("bez3.jpg", "bez palcow 3", results);
+	computeHand("bez4.jpg", "bez palcow 4", results);
+	//computeHand("bez5.jpg", "bez palcow 5", results);
+	computeHand("bez6.jpg", "bez palcow 6", results);
+	computeHand("bez7.jpg", "bez palcow 7", results);
+	computeHand("z2.jpg", "z palcami 2", results);
+	computeHand("z3.jpg", "z palcami 3", results);
+	computeHand("z4.jpg", "z palcami 4", results);
+	computeHand("z5.jpg", "z palcami 5", results);
+	computeHand("z6.jpg", "z palcami 6", results);
+	computeHand("z7.jpg", "z palcami 7", results);
+	computeHand("z8.jpg", "z palcami 8", results);
 
-	/*
+	computeGlove("d1.jpg", "dlon 1", results);
+	computeGlove("d2.jpg", "dlon 2", results);
+	computeGlove("d3.jpg", "dlon 3", results);
+	computeGlove("d4.jpg", "dlon 4", results);
+	computeGlove("d6.jpg", "dlon 6", results);
+	computeGlove("d7.jpg", "dlon 7", results);
+	computeGlove("d8.jpg", "dlon 8", results);
+	computeGlove("d9.jpg", "dlon 9", results);
+	computeGlove("z1.jpg", "z palcami 1", results);
 	computeGlove("z2.jpg", "z palcami 2", results);
 	computeGlove("z3.jpg", "z palcami 3", results);
 	computeGlove("z4.jpg", "z palcami 4", results);
@@ -394,14 +442,15 @@ int main(int, char *[]) {
 	computeGlove("z6.jpg", "z palcami 6", results);
 	computeGlove("z7.jpg", "z palcami 7", results);
 	computeGlove("z8.jpg", "z palcami 8", results);
+	computeGlove("bez1.jpg", "bez palcow 1", results);
 	computeGlove("bez2.jpg", "bez palcow 2", results);
 	computeGlove("bez3.jpg", "bez palcow 3", results);
 	computeGlove("bez4.jpg", "bez palcow 4", results);
-	computeGlove("bez5.jpg", "bez palcow 5", results);
+	//computeGlove("bez5.jpg", "bez palcow 5", results);
 	computeGlove("bez6.jpg", "bez palcow 6", results);
 	computeGlove("bez7.jpg", "bez palcow 7", results);
-	*/
 	computeGlove("bez8.jpg", "bez palcow 8", results);
+	
 	results.close();
 	/*
 	cv::Mat zpalcami1 = cv::imread("zpalcami1.jpg");
@@ -494,7 +543,7 @@ int main(int, char *[]) {
 	*/
 	
 	
-
+	system("pause");
     cv::waitKey(-1);
     return 0;
 }
